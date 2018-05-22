@@ -291,29 +291,57 @@ public:
             prog->setMVP(&M[0][0], &V[0][0], &P[0][0]);
             glUniform1f(prog->getUniform("Dancer"), i);
             glDrawArrays(GL_LINES, 4, size_stick-4);
-            
-            cout << "printing i: " << i << endl;
         }
     
         glBindVertexArray(0);
-        
         
         //Back Up Dancers
         glBindVertexArray(VertexArrayID2);
         
         //Left Dancer
-        Trans = glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, -1.3f, -6));
+        float xLocLeft = -1.5;
+        Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLocLeft, -1.3f, -6));
         M = Trans * S;
         prog->setMVP(&M[0][0], &V[0][0], &P[0][0]);
         glUniformMatrix4fv(prog->getUniform("Manim"), 200, GL_FALSE, &animmat2[0][0][0]);
-        glUniform1f(prog->getUniform("Dancer"), 2);
+        glUniform1f(prog->getUniform("Dancer"), 1);
         glDrawArrays(GL_LINES, 4, size_stick_2-4);
         
         //Right Dancer
+        float xLocRight = 0.5;
         Trans = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, -1.3f, -6));
         M = Trans * S;
         prog->setMVP(&M[0][0], &V[0][0], &P[0][0]);
         glDrawArrays(GL_LINES, 4, size_stick_2-4);
+        
+        //Left Dancer : Decreasing Transparency for Glow effect
+        static float j;
+        for(j = 0.002; j < 0.012; j+=0.002){
+            //Left
+            Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLocLeft+j, -1.3f, -6));
+            M = Trans * S;
+            prog->setMVP(&M[0][0], &V[0][0], &P[0][0]);
+            glUniform1f(prog->getUniform("Dancer"), j+1);
+            glDrawArrays(GL_LINES, 4, size_stick-4);
+            //Left
+            Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLocLeft-j, -1.3f, -6));
+            M = Trans * S;
+            prog->setMVP(&M[0][0], &V[0][0], &P[0][0]);
+            glUniform1f(prog->getUniform("Dancer"), j+1);
+            glDrawArrays(GL_LINES, 4, size_stick-4);
+            //Right
+            Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLocRight+j, -1.3f, -6));
+            M = Trans * S;
+            prog->setMVP(&M[0][0], &V[0][0], &P[0][0]);
+            glUniform1f(prog->getUniform("Dancer"), j+1);
+            glDrawArrays(GL_LINES, 4, size_stick-4);
+            //Right
+            Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLocRight-j, -1.3f, -6));
+            M = Trans * S;
+            prog->setMVP(&M[0][0], &V[0][0], &P[0][0]);
+            glUniform1f(prog->getUniform("Dancer"), j+1);
+            glDrawArrays(GL_LINES, 4, size_stick-4);
+        }
         
         glBindVertexArray(0);
         prog->unbind();
