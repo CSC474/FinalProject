@@ -39,13 +39,16 @@ public:
     Camera *camera = nullptr;
     
     // Our shader program
-    std::shared_ptr<Program> shape, prog;
+    std::shared_ptr<Program> shape, prog, postproc;
     
     GLuint VertexArrayID;
     GLuint VertexBufferID, VertexBufferIDimat, VertexNormDBox, VertexTexBox, IndexBufferIDBox;
     
     GLuint VertexArrayID2;
     GLuint VertexBufferID2, VertexBufferIDimat2, VertexNormDBox2, VertexTexBox2, IndexBufferIDBox2;
+    
+    //Frame Buffer
+    GLuint fb, depth_fb,FBOtex;
     
     //animation matrices:
     mat4 animmat[200];
@@ -109,7 +112,12 @@ public:
         //does nothing rn
     }
 
-	void resizeCallback(GLFWwindow *window, int in_width, int in_height) { }
+	void resizeCallback(GLFWwindow *window, int in_width, int in_height)
+    {
+        int width, height;
+        glfwGetFramebufferSize(window, &width, &height);
+        glViewport(0, 0, width, height);
+    }
     
     // Reset mouse move initial position and rotation
     void resetMouseMoveInitialValues(GLFWwindow *window)
@@ -208,6 +216,18 @@ public:
         prog->init();
         prog->addUniform("Manim");
         prog->addUniform("Dancer");
+        
+        //program for the postprocessing
+        postproc = std::make_shared<Program>();
+        postproc->setVerbose(true);
+        postproc->setShaderNames(resourceDirectory + "/ppshader_vertex.glsl", resourceDirectory + "/ppshader_fragment.glsl");
+        if (!postproc->init())
+        {
+            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
+            exit(1);
+        }
+        postproc->addAttribute("vertPos");
+        postproc->addAttribute("vertTex");
 	}
     
     glm::mat4 getPerspectiveMatrix() {
@@ -371,6 +391,7 @@ int main(int argc, char **argv) {
         // Update camera position.
         application->camera->update();
 		// Render scene.
+        //application->render_to_framebuffer();
 		application->render();
 
 		// Swap front and back buffers.
