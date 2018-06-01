@@ -25,6 +25,7 @@
 #include "tiny_obj_loader.h"
 #include "line.h"
 #include "bone.h"
+#include "particle.h"
 
 using namespace std;
 using namespace glm;
@@ -37,13 +38,16 @@ double get_last_elapsed_time() {
 	return difference;
 }
 
+void GenParticles(bone *broot, particles *parts, int frame);
+void GenPartMats(particles *parts, mat4 mats[]);
+
 class Application : public EventCallbacks {
 public:
 	WindowManager *windowManager = nullptr;
     Camera *camera = nullptr;
     
     // Our shader program
-    std::shared_ptr<Program> shape, prog, postproc;
+    std::shared_ptr<Program> shape, prog, postproc, partProg;
     
     //Center Dancer
     GLuint VertexArrayID;
@@ -55,6 +59,10 @@ public:
     
     //Frame Buffer
     GLuint VertexArrayIDScreen, VertexBufferIDScreen, VertexBufferTexScreen;
+    
+    //Particle Buffer
+    GLuint VertexArrayIDPart;
+    GLuint VertexBufferPart, VertexBufferPartMat;
     
     //Frame Buffer
     GLuint fb, depth_fb, FBOtex;
@@ -73,6 +81,8 @@ public:
     glm::vec3 mouseMoveInitialCameraRot;
     bone *root = NULL;
     bone *root2 = NULL;
+    particles parts;
+    mat4 partAnims[73];
     int size_stick = 0;
     int size_stick_2 = 0;
     all_animations all_animation;
@@ -243,9 +253,36 @@ public:
         glEnableVertexAttribArray(1);
         glVertexAttribIPointer(1, 1, GL_UNSIGNED_INT, 0, (void*)0);
         
-        glBindVertexArray(0);
-
         glUseProgram(prog->pid);
+        
+        
+        // *************** Particle *******************
+        //Center Dancer
+        glGenVertexArrays(1, &VertexArrayIDPart);
+        glBindVertexArray(VertexArrayIDPart);
+        
+        glGenBuffers(1, &VertexBufferPart);
+        glBindBuffer(GL_ARRAY_BUFFER, VertexBufferPart);
+        
+        GenParticles(root, &parts, 10);
+        GenPartMats(&parts, partAnims);
+        // Allocate Space for Bones
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vec3)*parts.pos.size(), parts.pos.data(), GL_DYNAMIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        
+        vector<unsigned int> inds;
+        for (int i = 0; i < parts.pos.size(); i++)
+            inds.push_back(i);
+        
+        // Allocate Space for Animations
+        glGenBuffers(1, &VertexBufferPartMat);
+        glBindBuffer(GL_ARRAY_BUFFER, VertexBufferPartMat);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(uint)*inds.size(), inds.data(), GL_DYNAMIC_DRAW);
+        glEnableVertexAttribArray(1);
+        glVertexAttribIPointer(1, 1, GL_UNSIGNED_INT, 0, (void*)0);
+        // *************** Particle *******************
+        
         
         ///////////////////////////
         // FRAMEBUFFER CODE BELOW
@@ -295,6 +332,7 @@ public:
                 cout << "status framebuffer: bad!!!!!!!!!!!!!!!!!!!!!!!!!";
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindVertexArray(0);
         
 	}
 	
@@ -327,6 +365,13 @@ public:
         }
         postproc->addAttribute("vertPos");
         postproc->addAttribute("vertTex");
+        
+        // Program for particles
+        partProg = std::make_shared<Program>();
+        partProg->setShaderNames(resourceDirectory + "/part_vertex.glsl", resourceDirectory + "/part_fragment.glsl");
+        partProg->init();
+        partProg->addUniform("Manim");
+        partProg->addUniform("Dancer");
 	}
     
     glm::mat4 getPerspectiveMatrix() {
@@ -485,11 +530,46 @@ public:
         glBindVertexArray(0);
         prog->unbind();
         
+        // *********** Particles *****************
+        partProg->bind();
+        // Center Dancer particle
+        glBindVertexArray(VertexArrayIDPart);
+        xLoc = -1.3;
+        Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLoc, -1.3f, -4));
+        M = Trans;
+        partProg->setMVP(&M[0][0], &V[0][0], &P[0][0]);
+        glUniformMatrix4fv(partProg->getUniform("Manim"), 73, GL_FALSE, &partAnims[0][0][0]);
+        glUniform1f(prog->getUniform("Dancer"), 0);
+        glDrawArrays(GL_POINT, 0, 73);
+        
+        partProg->unbind();
+        // *********** Particles *****************
+        glBindVertexArray(0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, FBOtex);
         glGenerateMipmap(GL_TEXTURE_2D);
 	}
 };
+
+void GenParticles(bone *broot, particles *parts, int frame) {
+    parts->pos.push_back(broot->pos);
+    parts->quatr.push_back(broot->animation.back()->keyframes[frame].quaternion);
+    parts->trans.push_back(broot->animation.back()->keyframes[frame].translation);
+    
+    for (auto kid: broot->kids)
+        GenParticles(kid, parts, frame);
+}
+
+void GenPartMats(particles *parts, mat4 mats[]) {
+    assert(parts->quatr.size() == parts->trans.size());
+    mat4 temp;
+    
+    for (int i = 0; i < parts->quatr.size(); i++) {
+        temp = mat4(parts->quatr[i]);
+        temp = glm::translate(mat4(1.0), parts->trans[i]) * temp;
+        mats[i] = temp;
+    }
+}
 
 int main(int argc, char **argv) {
 	std::string resourceDir = "../../resources";
