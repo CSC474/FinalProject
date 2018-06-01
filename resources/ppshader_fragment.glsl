@@ -13,7 +13,7 @@ void main()
 	for (float i = 1; i < n; i++){
 		for (float j = 1; j < n; j++){
 			//float d = dist(vec2(i,j),)
-			float fade = 1 / (length(vec2(i,j)) * 4);
+			float fade = 1 / (length(vec2(i,j)) );
 			vec4 temptex = texture(tex,vertex_tex + vec2(hd_x * i,hd_y * j),2);
 			tcol += temptex* fade;
 		}
