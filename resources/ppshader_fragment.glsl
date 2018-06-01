@@ -7,8 +7,8 @@ void main()
 {
 	vec4 tcol = texture(tex, vertex_tex);
 
-	float hd_x = 1./1920.;
-	float hd_y = 1./1061.;
+	float hd_x = 1./800.;
+	float hd_y = 1./600.;
 	float n = 5;
 	for (float i = 1; i < n; i++){
 		for (float j = 1; j < n; j++){

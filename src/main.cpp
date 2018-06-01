@@ -1,6 +1,7 @@
 // Core libraries
 #include <iostream>
 #include <cmath>
+#include <ctime>
 #include <string>
 #include <fstream>
 #include <streambuf>
@@ -8,7 +9,9 @@
 // Third party libraries
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <glad/glad.h>
+#include <algorithm>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -16,6 +19,7 @@
 #include "GLSL.h"
 #include "Program.h"
 #include "WindowManager.h"
+#include "MatrixStack.h"
 #include "Shape.h"
 #include "Camera.h"
 #include "tiny_obj_loader.h"
@@ -41,14 +45,19 @@ public:
     // Our shader program
     std::shared_ptr<Program> shape, prog, postproc;
     
+    //Center Dancer
     GLuint VertexArrayID;
     GLuint VertexBufferID, VertexBufferIDimat, VertexNormDBox, VertexTexBox, IndexBufferIDBox;
     
+    //Backup Dancers
     GLuint VertexArrayID2;
     GLuint VertexBufferID2, VertexBufferIDimat2, VertexNormDBox2, VertexTexBox2, IndexBufferIDBox2;
     
     //Frame Buffer
-    GLuint fb, depth_fb,FBOtex;
+    GLuint VertexArrayIDScreen, VertexBufferIDScreen, VertexBufferTexScreen;
+    
+    //Frame Buffer
+    GLuint fb, depth_fb, FBOtex;
     
     //animation matrices:
     mat4 animmat[200];
@@ -130,6 +139,46 @@ public:
    
 	void initGeom(const std::string& resourceDirectory)
     {
+        srand(std::time(0));
+        //screen plane
+        glGenVertexArrays(1, &VertexArrayIDScreen);
+        glBindVertexArray(VertexArrayIDScreen);
+        //generate vertex buffer to hand off to OGL
+        glGenBuffers(1, &VertexBufferIDScreen);
+        //set the current state to focus on our vertex buffer
+        glBindBuffer(GL_ARRAY_BUFFER, VertexBufferIDScreen);
+        vec3 vertices[6];
+        vertices[0] = vec3(-1, -1, 0);
+        vertices[1] = vec3(1, -1, 0);
+        vertices[2] = vec3(1, 1, 0);
+        vertices[3] = vec3(-1, -1, 0);
+        vertices[4] = vec3(1, 1, 0);
+        vertices[5] = vec3(-1, 1, 0);
+        //actually memcopy the data - only do this once
+        glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(vec3), vertices, GL_STATIC_DRAW);
+        //we need to set up the vertex array
+        glEnableVertexAttribArray(0);
+        //key function to get up how many elements to pull out at a time (3)
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        //generate vertex buffer to hand off to OGL
+        glGenBuffers(1, &VertexBufferTexScreen);
+        //set the current state to focus on our vertex buffer
+        glBindBuffer(GL_ARRAY_BUFFER, VertexBufferTexScreen);
+        vec2 texscreen[6];
+        texscreen[0] = vec2(0, 0);
+        texscreen[1] = vec2(1, 0);
+        texscreen[2] = vec2(1, 1);
+        texscreen[3] = vec2(0, 0);
+        texscreen[4] = vec2(1, 1);
+        texscreen[5] = vec2(0, 1);
+        //actually memcopy the data - only do this once
+        glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(vec2), texscreen, GL_STATIC_DRAW);
+        //we need to set up the vertex array
+        glEnableVertexAttribArray(1);
+        //key function to get up how many elements to pull out at a time (3)
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        glBindVertexArray(0);
+        
         for (int ii = 0; ii < 200; ii++){
             //Center Dancer
             animmat[ii] = mat4(1);
@@ -197,6 +246,56 @@ public:
         glBindVertexArray(0);
 
         glUseProgram(prog->pid);
+        
+        ///////////////////////////
+        // FRAMEBUFFER CODE BELOW
+        ///////////////////////////
+        GLuint Tex1Location = glGetUniformLocation(postproc->pid, "tex");//tex, tex2... sampler in the fragment shader
+        glUseProgram(postproc->pid);
+        glUniform1i(Tex1Location, 0);
+        int width, height;
+        glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
+        //RGBA8 2D texture, 24 bit depth texture, 256x256
+        glGenTextures(1, &FBOtex);
+        glBindTexture(GL_TEXTURE_2D, FBOtex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        //NULL means reserve texture memory, but texels are undefined
+        //**** Tell OpenGL to reserve level 0
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+        //You must reserve memory for other mipmaps levels as well either by making a series of calls to
+        //glTexImage2D or use glGenerateMipmapEXT(GL_TEXTURE_2D).
+        //Here, we'll use :
+        glGenerateMipmap(GL_TEXTURE_2D);
+        //make a frame buffer
+        //-------------------------
+        glGenFramebuffers(1, &fb);
+        glBindFramebuffer(GL_FRAMEBUFFER, fb);
+        //Attach 2D texture to this FBO
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, FBOtex, 0);
+        //-------------------------
+        glGenRenderbuffers(1, &depth_fb);
+        glBindRenderbuffer(GL_RENDERBUFFER, depth_fb);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height);
+        //-------------------------
+        //Attach depth buffer to FBO
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_fb);
+        //-------------------------
+        //Does the GPU support current FBO configuration?
+        GLenum status;
+        status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        switch (status)
+        {
+            case GL_FRAMEBUFFER_COMPLETE:
+                cout << "status framebuffer: good";
+                break;
+            default:
+                cout << "status framebuffer: bad!!!!!!!!!!!!!!!!!!!!!!!!!";
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        
 	}
 	
 	void init(const std::string& resourceDirectory) {
@@ -235,14 +334,34 @@ public:
         float aspect = windowManager->getAspect();
         return glm::perspective(fov, aspect, 0.01f, 10000.0f);
     }
+    
+    void render() {
+        int width, height;
+        glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
+        glViewport(0, 0, width, height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        postproc->bind();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, FBOtex);
+        glBindVertexArray(VertexArrayIDScreen);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        postproc->unbind();
+    }
   
-	void render() {
-        // Init
+	void render_to_framebuffer() {
+        glBindFramebuffer(GL_FRAMEBUFFER, fb);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        
+        // Get current frame buffer size.
+        int width, height;
+        glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
+        float aspect = width / (float)height;
+        glViewport(0, 0, width, height);
+
+        //glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         
         // Frame Data
         double frametime = get_last_elapsed_time();
@@ -365,6 +484,10 @@ public:
         
         glBindVertexArray(0);
         prog->unbind();
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindTexture(GL_TEXTURE_2D, FBOtex);
+        glGenerateMipmap(GL_TEXTURE_2D);
 	}
 };
 
@@ -391,7 +514,7 @@ int main(int argc, char **argv) {
         // Update camera position.
         application->camera->update();
 		// Render scene.
-        //application->render_to_framebuffer();
+        application->render_to_framebuffer();
 		application->render();
 
 		// Swap front and back buffers.
