@@ -370,7 +370,7 @@ public:
         partProg = std::make_shared<Program>();
         partProg->setShaderNames(resourceDirectory + "/part_vertex.glsl", resourceDirectory + "/part_fragment.glsl");
         partProg->init();
-        partProg->addUniform("Manim");
+        partProg->addUniform("Panim");
         partProg->addUniform("Dancer");
 	}
     
@@ -538,9 +538,11 @@ public:
         Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLoc, -1.3f, -4));
         M = Trans;
         partProg->setMVP(&M[0][0], &V[0][0], &P[0][0]);
-        glUniformMatrix4fv(partProg->getUniform("Manim"), 73, GL_FALSE, &partAnims[0][0][0]);
-        glUniform1f(partProg->getUniform("Dancer"), 0);
-        glDrawArrays(GL_POINT, 0, 73);
+        glUniformMatrix4fv(partProg->getUniform("Panim"), 73, GL_FALSE, &partAnims[0][0][0]);
+        //glUniform1f(partProg->getUniform("Dancer"), 0);
+        glDrawArrays(GL_LINES, 0, 73);
+        //glPointSize(5.0f);
+        //glBegin(GL_POINTS);
         
         partProg->unbind();
         // *********** Particles *****************
