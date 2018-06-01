@@ -539,7 +539,7 @@ public:
         M = Trans;
         partProg->setMVP(&M[0][0], &V[0][0], &P[0][0]);
         glUniformMatrix4fv(partProg->getUniform("Manim"), 73, GL_FALSE, &partAnims[0][0][0]);
-        glUniform1f(prog->getUniform("Dancer"), 0);
+        glUniform1f(partProg->getUniform("Dancer"), 0);
         glDrawArrays(GL_POINT, 0, 73);
         
         partProg->unbind();
