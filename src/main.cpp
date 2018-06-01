@@ -37,13 +37,15 @@ double get_last_elapsed_time() {
 	return difference;
 }
 
+void GenParticles(bone *locRoot, vector<vec3> *pos);
+
 class Application : public EventCallbacks {
 public:
 	WindowManager *windowManager = nullptr;
     Camera *camera = nullptr;
     
     // Our shader program
-    std::shared_ptr<Program> shape, prog, postproc;
+    std::shared_ptr<Program> shape, prog, postproc, partProg;
     
     //Center Dancer
     GLuint VertexArrayID;
@@ -55,6 +57,7 @@ public:
     
     //Frame Buffer
     GLuint VertexArrayIDScreen, VertexBufferIDScreen, VertexBufferTexScreen;
+    
     
     //Frame Buffer
     GLuint fb, depth_fb, FBOtex;
@@ -327,6 +330,12 @@ public:
         }
         postproc->addAttribute("vertPos");
         postproc->addAttribute("vertTex");
+        
+        partProg = std::make_shared<Program>();
+        partProg->setShaderNames(resourceDirectory + "/part_vertex.glsl", resourceDirectory + "/part_fragment.glsl");
+        partProg->init();
+        partProg->addUniform("Manim");
+        partProg->addUniform("Dancer");
 	}
     
     glm::mat4 getPerspectiveMatrix() {
@@ -490,6 +499,10 @@ public:
         glGenerateMipmap(GL_TEXTURE_2D);
 	}
 };
+
+void GenParticles(bone *locRoot, vector<vec3> *pos) {
+    
+}
 
 int main(int argc, char **argv) {
 	std::string resourceDir = "../../resources";
