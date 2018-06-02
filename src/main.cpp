@@ -400,7 +400,7 @@ public:
         
         // Get current frame buffer size.
         int width, height;
-        float yAccel = 9.8;
+        float yAccel = 9.8, opac = 1;
         static float yVelo;
         glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
         float aspect = width / (float)height;
@@ -533,6 +533,7 @@ public:
         prog->unbind();
         
         if (frame == 10 || frame == 70 || frame == 130) {
+            opac = 1;
             totaltime_ms = 0;
             yVelo = 0;
             GenPartMats(&parts, partAnims);
@@ -545,6 +546,7 @@ public:
             // Center Dancer particle
             glBindVertexArray(VertexArrayIDPart);
             xLoc = -1.3;
+            opac -= .5;
             S = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f, 0.01f, 0.01f));
             Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLoc, -1.3f, -4));
             M = Trans * S;
@@ -552,6 +554,7 @@ public:
             glUniformMatrix4fv(partProg->getUniform("Panim"), 73, GL_FALSE, &partAnims[0][0][0]);
             glUniform1f(partProg->getUniform("Dancer"), 0);
             glUniform1f(partProg->getUniform("yVelo"), yVelo);
+            glUniform1f(partProg->getUniform("opac"), opac);
             glPointSize(3.0f);
             glDrawArrays(GL_POINTS, 3, 70);
             

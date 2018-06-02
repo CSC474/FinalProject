@@ -6,8 +6,10 @@ uniform mat4 V;
 uniform mat4 M;
 uniform mat4 Panim[73];
 uniform float yVelo;
+uniform float opac;
 
 out vec3 vertex_pos;
+out float opaci;
 void main()
 {
     mat4 Ma = Panim[vertimat];
@@ -18,6 +20,10 @@ void main()
     pos.y = Ma[3][1];
     pos.z = Ma[3][2];
     pos.y -= yVelo;
+    if (pos.y < 0) {
+        pos.y = 0;
+    }
+    opaci = opac;
     gl_Position = P * V * M * pos;
     vertex_pos = pos.xyz;
 }
