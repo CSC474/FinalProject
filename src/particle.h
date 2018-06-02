@@ -15,6 +15,7 @@ struct particles {
     std::vector<vec3> pos;
     std::vector<quat> quatr;
     std::vector<vec3> trans;
+    std::vector<mat4*> ma;
 };
 
 #endif /* particle_h */

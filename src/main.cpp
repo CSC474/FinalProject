@@ -400,6 +400,8 @@ public:
         
         // Get current frame buffer size.
         int width, height;
+        float yAccel = 9.8, opac = 1;
+        static float yVelo;
         glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
         float aspect = width / (float)height;
         glViewport(0, 0, width, height);
@@ -530,21 +532,34 @@ public:
         glBindVertexArray(0);
         prog->unbind();
         
-        // *********** Particles *****************
-        partProg->bind();
-        // Center Dancer particle
-        glBindVertexArray(VertexArrayIDPart);
-        xLoc = -1.3;
-        Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLoc, -1.3f, -4));
-        M = Trans;
-        partProg->setMVP(&M[0][0], &V[0][0], &P[0][0]);
-        glUniformMatrix4fv(partProg->getUniform("Panim"), 73, GL_FALSE, &partAnims[0][0][0]);
-        //glUniform1f(partProg->getUniform("Dancer"), 0);
-        glDrawArrays(GL_LINES, 0, 73);
-        //glPointSize(5.0f);
-        //glBegin(GL_POINTS);
+        if (frame == 10 || frame == 70 || frame == 130) {
+            opac = 1;
+            totaltime_ms = 0;
+            yVelo = 0;
+            GenPartMats(&parts, partAnims);
+        }
         
-        partProg->unbind();
+        if (frame > 10) {
+            // *********** Particles *****************
+            partProg->bind();
+            yVelo += yAccel*(totaltime_ms/800);
+            // Center Dancer particle
+            glBindVertexArray(VertexArrayIDPart);
+            xLoc = -1.3;
+            opac -= .5;
+            S = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f, 0.01f, 0.01f));
+            Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLoc, -1.3f, -4));
+            M = Trans * S;
+            partProg->setMVP(&M[0][0], &V[0][0], &P[0][0]);
+            glUniformMatrix4fv(partProg->getUniform("Panim"), 73, GL_FALSE, &partAnims[0][0][0]);
+            glUniform1f(partProg->getUniform("Dancer"), 0);
+            glUniform1f(partProg->getUniform("yVelo"), yVelo);
+            glUniform1f(partProg->getUniform("opac"), opac);
+            glPointSize(3.0f);
+            glDrawArrays(GL_POINTS, 3, 70);
+            
+            partProg->unbind();
+        }
         // *********** Particles *****************
         glBindVertexArray(0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -557,6 +572,7 @@ void GenParticles(bone *broot, particles *parts, int frame) {
     parts->pos.push_back(broot->pos);
     parts->quatr.push_back(broot->animation.back()->keyframes[frame].quaternion);
     parts->trans.push_back(broot->animation.back()->keyframes[frame].translation);
+    parts->ma.push_back(broot->mat);
     
     for (auto kid: broot->kids)
         GenParticles(kid, parts, frame);
@@ -564,13 +580,9 @@ void GenParticles(bone *broot, particles *parts, int frame) {
 
 void GenPartMats(particles *parts, mat4 mats[]) {
     assert(parts->quatr.size() == parts->trans.size());
-    mat4 temp;
     
-    for (int i = 0; i < parts->quatr.size(); i++) {
-        temp = mat4(parts->quatr[i]);
-        temp = glm::translate(mat4(1.0), parts->trans[i]) * temp;
-        mats[i] = temp;
-    }
+    for (int i = 0; i < parts->ma.size(); i++)
+        mats[i] = *(parts->ma[i]);
 }
 
 int main(int argc, char **argv) {
