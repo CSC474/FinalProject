@@ -4,7 +4,7 @@ layout(location = 1) in int vertimat;
 uniform mat4 P;
 uniform mat4 V;
 uniform mat4 M;
-uniform mat4 Panim[73];
+uniform mat4 Panim[250];
 uniform float yVelo;
 uniform float opac;
 

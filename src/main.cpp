@@ -27,6 +27,8 @@
 #include "bone.h"
 #include "particle.h"
 
+#define NUM_PARTICLES 250
+
 using namespace std;
 using namespace glm;
 
@@ -38,8 +40,9 @@ double get_last_elapsed_time() {
 	return difference;
 }
 
-void GenParticles(bone *broot, particles *parts, int frame);
+void GenParticles(bone *broot, particles *parts);
 void GenPartMats(particles *parts, mat4 mats[]);
+void CreateExtraVerts(vec3 lPos, vec3 cPos, particles *parts, bone *broot);
 
 class Application : public EventCallbacks {
 public:
@@ -82,7 +85,7 @@ public:
     bone *root = NULL;
     bone *root2 = NULL;
     particles parts;
-    mat4 partAnims[73];
+    mat4 partAnims[NUM_PARTICLES];
     int size_stick = 0;
     int size_stick_2 = 0;
     all_animations all_animation;
@@ -264,7 +267,7 @@ public:
         glGenBuffers(1, &VertexBufferPart);
         glBindBuffer(GL_ARRAY_BUFFER, VertexBufferPart);
         
-        GenParticles(root, &parts, 10);
+        GenParticles(root, &parts);
         GenPartMats(&parts, partAnims);
         // Allocate Space for Bones
         glBufferData(GL_ARRAY_BUFFER, sizeof(vec3)*parts.pos.size(), parts.pos.data(), GL_DYNAMIC_DRAW);
@@ -551,12 +554,12 @@ public:
             Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLoc, -1.3f, -4));
             M = Trans * S;
             partProg->setMVP(&M[0][0], &V[0][0], &P[0][0]);
-            glUniformMatrix4fv(partProg->getUniform("Panim"), 73, GL_FALSE, &partAnims[0][0][0]);
+            glUniformMatrix4fv(partProg->getUniform("Panim"), NUM_PARTICLES, GL_FALSE, &partAnims[0][0][0]);
             glUniform1f(partProg->getUniform("Dancer"), 0);
             glUniform1f(partProg->getUniform("yVelo"), yVelo);
             glUniform1f(partProg->getUniform("opac"), opac);
             glPointSize(3.0f);
-            glDrawArrays(GL_POINTS, 3, 70);
+            glDrawArrays(GL_POINTS, 3, NUM_PARTICLES-1);
             
             partProg->unbind();
         }
@@ -568,18 +571,34 @@ public:
 	}
 };
 
-void GenParticles(bone *broot, particles *parts, int frame) {
+void GenParticles(bone *broot, particles *parts) {
+    vec3 lPos = vec3(INT_MIN, INT_MIN, INT_MIN);
+    if (!parts->pos.empty())
+        lPos = parts->pos.back();
+    
     parts->pos.push_back(broot->pos);
-    parts->quatr.push_back(broot->animation.back()->keyframes[frame].quaternion);
-    parts->trans.push_back(broot->animation.back()->keyframes[frame].translation);
     parts->ma.push_back(broot->mat);
     
+    if (lPos.x > INT_MIN)
+        CreateExtraVerts(lPos, parts->pos.back(), parts, broot);
+    
+    
     for (auto kid: broot->kids)
-        GenParticles(kid, parts, frame);
+        GenParticles(kid, parts);
+}
+
+void CreateExtraVerts(vec3 lPos, vec3 cPos, particles *parts, bone *broot) {
+    if (distance(lPos, cPos) < 6.5) // do not lower this number
+        return;
+    
+    vec3 avg = vec3((lPos.x + cPos.x)/2, (lPos.y + cPos.y)/2, (lPos.z + cPos.z)/2);
+    parts->pos.push_back(avg);
+    parts->ma.push_back(broot->mat);
+    CreateExtraVerts(cPos, parts->pos.back(), parts, broot);
+    CreateExtraVerts(lPos, parts->pos.back(), parts, broot);
 }
 
 void GenPartMats(particles *parts, mat4 mats[]) {
-    assert(parts->quatr.size() == parts->trans.size());
     
     for (int i = 0; i < parts->ma.size(); i++)
         mats[i] = *(parts->ma[i]);
