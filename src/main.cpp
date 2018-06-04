@@ -27,6 +27,7 @@
 #include "bone.h"
 #include "particle.h"
 
+#define NUM_MATS 250
 #define NUM_PARTICLES 250
 
 using namespace std;
@@ -85,7 +86,7 @@ public:
     bone *root = NULL;
     bone *root2 = NULL;
     particles parts;
-    mat4 partAnims[NUM_PARTICLES];
+    mat4 partAnims[NUM_MATS];
     int size_stick = 0;
     int size_stick_2 = 0;
     all_animations all_animation;
@@ -403,8 +404,8 @@ public:
         
         // Get current frame buffer size.
         int width, height;
-        float yAccel = 9.8, opac = 1;
-        static float yVelo;
+        float yAccel = 9.8;
+        static float yVelo, opac = 1;
         glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
         float aspect = width / (float)height;
         glViewport(0, 0, width, height);
@@ -545,21 +546,22 @@ public:
         if (frame > 10) {
             // *********** Particles *****************
             partProg->bind();
-            yVelo += yAccel*(totaltime_ms/800);
+            yVelo += yAccel*(totaltime_ms/2000);
             // Center Dancer particle
             glBindVertexArray(VertexArrayIDPart);
             xLoc = -1.3;
-            opac -= .5;
+            opac -= .005;
             S = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f, 0.01f, 0.01f));
             Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLoc, -1.3f, -4));
             M = Trans * S;
             partProg->setMVP(&M[0][0], &V[0][0], &P[0][0]);
-            glUniformMatrix4fv(partProg->getUniform("Panim"), NUM_PARTICLES, GL_FALSE, &partAnims[0][0][0]);
+            
+            glUniformMatrix4fv(partProg->getUniform("Panim"), NUM_MATS, GL_FALSE, &partAnims[0][0][0]);
             glUniform1f(partProg->getUniform("Dancer"), 0);
             glUniform1f(partProg->getUniform("yVelo"), yVelo);
             glUniform1f(partProg->getUniform("opac"), opac);
             glPointSize(3.0f);
-            glDrawArrays(GL_POINTS, 3, NUM_PARTICLES-1);
+            glDrawArrays(GL_POINTS, 0, NUM_PARTICLES);
             
             partProg->unbind();
         }
@@ -573,6 +575,7 @@ public:
 
 void GenParticles(bone *broot, particles *parts) {
     vec3 lPos = vec3(INT_MIN, INT_MIN, INT_MIN);
+    
     if (!parts->pos.empty())
         lPos = parts->pos.back();
     
