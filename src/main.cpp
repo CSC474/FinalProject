@@ -585,7 +585,7 @@ public:
 
                     if (MA[3][1] < 0) {
                         MA[3][1] = 0;
-                        aParts.cParts[pI].impulse[i] *= -.7;
+                        aParts.cParts[pI].impulse[i] *= -.5;
                     }
 
                     partProg->setMVP(&M[0][0], &V[0][0], &P[0][0]);
