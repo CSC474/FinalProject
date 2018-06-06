@@ -50,7 +50,7 @@ public:
     Camera *camera = nullptr;
     
     // Our shader program
-    std::shared_ptr<Program> shape, prog, postproc, partProg;
+    std::shared_ptr<Program> shape, prog, postproc, partProg, backProg;
     
     //Center Dancer
     GLuint VertexArrayID;
@@ -375,6 +375,18 @@ public:
         partProg->init();
         partProg->addUniform("Panim");
         partProg->addUniform("Dancer");
+        
+        //program for back effect post processing
+        backProg = std::make_shared<Program>();
+        backProg->setVerbose(true);
+        backProg->setShaderNames(resourceDirectory + "/back_shader_vertex.glsl", resourceDirectory + "/back_shader_fragment.glsl");
+        if (!backProg->init())
+        {
+            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
+            exit(1);
+        }
+        backProg->addAttribute("vertPos");
+        backProg->addAttribute("vertTex");
 	}
     
     glm::mat4 getPerspectiveMatrix() {
