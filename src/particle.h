@@ -14,6 +14,15 @@
 struct particles {
     std::vector<vec3> pos;
     std::vector<mat4*> ma;
+    std::vector<vec3> speed;
+    std::vector<vec3> impulse;
+    
+    void ResetFall() {
+        for (int i = 0; i < speed.size(); i++) {
+            speed[i] = vec3(0,0,0);
+            impulse[i] = vec3(0,0,0);
+        }
+    }
 };
 
 #endif /* particle_h */

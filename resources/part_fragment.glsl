@@ -1,7 +1,6 @@
 #version 330 core
 out vec4 color;
 in vec3 vertex_pos;
-in float opaci;
 uniform vec3 campos;
 uniform float Dancer;
 uniform sampler2D tex;
@@ -12,7 +11,7 @@ void main()
     //Center Dancer
     if(Dancer == 0)
     {
-        color = vec4(1,1,1,opaci);
+        color = vec4(1,1,1,1);
     }
     if(Dancer == 0.002)
     {

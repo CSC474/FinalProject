@@ -26,9 +26,10 @@
 #include "line.h"
 #include "bone.h"
 #include "particle.h"
+#include "allParts.h"
 
-#define NUM_MATS 250
-#define NUM_PARTICLES 250
+#define NUM_PARTICLES 805
+#define GRAV_FACTOR .15
 
 using namespace std;
 using namespace glm;
@@ -86,7 +87,11 @@ public:
     bone *root = NULL;
     bone *root2 = NULL;
     particles parts;
-    mat4 partAnims[NUM_MATS];
+    allParts aParts;
+    mat4 partAnims[NUM_PARTICLES];
+    mat4 partAnims2[NUM_PARTICLES];
+    mat4 partAnims3[NUM_PARTICLES];
+
     int size_stick = 0;
     int size_stick_2 = 0;
     all_animations all_animation;
@@ -269,22 +274,15 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, VertexBufferPart);
         
         GenParticles(root, &parts);
-        GenPartMats(&parts, partAnims);
+        vector<vec3> tPos;
+        tPos.push_back(root->pos);
         // Allocate Space for Bones
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vec3)*parts.pos.size(), parts.pos.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vec3), tPos.data(), GL_DYNAMIC_DRAW);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-        
-        vector<unsigned int> inds;
-        for (int i = 0; i < parts.pos.size(); i++)
-            inds.push_back(i);
-        
-        // Allocate Space for Animations
-        glGenBuffers(1, &VertexBufferPartMat);
-        glBindBuffer(GL_ARRAY_BUFFER, VertexBufferPartMat);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(uint)*inds.size(), inds.data(), GL_DYNAMIC_DRAW);
-        glEnableVertexAttribArray(1);
-        glVertexAttribIPointer(1, 1, GL_UNSIGNED_INT, 0, (void*)0);
+        // Backup Dancer
+        aParts.cParts.push_back(parts);
+        aParts.isFalling.push_back(false);
         // *************** Particle *******************
         
         
@@ -404,8 +402,6 @@ public:
         
         // Get current frame buffer size.
         int width, height;
-        float yAccel = 9.8;
-        static float yVelo, opac = 1;
         glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
         float aspect = width / (float)height;
         glViewport(0, 0, width, height);
@@ -536,32 +532,69 @@ public:
         glBindVertexArray(0);
         prog->unbind();
         
-        if (frame == 10 || frame == 70 || frame == 130) {
-            opac = 1;
-            totaltime_ms = 0;
-            yVelo = 0;
-            GenPartMats(&parts, partAnims);
+        if (frame == 10) {
+            GenPartMats(&aParts.cParts[0], partAnims);
+            aParts.cParts.back().ResetFall();
+        }
+        else if (frame == 70) {
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims2);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+        }
+        else if (frame == 110) {
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims3);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
         }
         
         if (frame > 10) {
             // *********** Particles *****************
             partProg->bind();
-            yVelo += yAccel*(totaltime_ms/2000);
             // Center Dancer particle
             glBindVertexArray(VertexArrayIDPart);
+            
             xLoc = -1.3;
-            opac -= .005;
             S = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f, 0.01f, 0.01f));
             Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLoc, -1.3f, -4));
             M = Trans * S;
-            partProg->setMVP(&M[0][0], &V[0][0], &P[0][0]);
+            mat4 MA;
             
-            glUniformMatrix4fv(partProg->getUniform("Panim"), NUM_MATS, GL_FALSE, &partAnims[0][0][0]);
-            glUniform1f(partProg->getUniform("Dancer"), 0);
-            glUniform1f(partProg->getUniform("yVelo"), yVelo);
-            glUniform1f(partProg->getUniform("opac"), opac);
-            glPointSize(3.0f);
-            glDrawArrays(GL_POINTS, 0, NUM_PARTICLES);
+            aParts.UpdateisFalling(frame);
+            for (int pI = 0; pI < aParts.cParts.size(); pI++) {
+                for (int i = 0; i < aParts.cParts[pI].pos.size(); i++) {
+                    if (pI == 0)
+                        MA = partAnims[i];
+                    else if (pI == 1)
+                        MA = partAnims2[i];
+                    else if (pI == 2)
+                        MA = partAnims3[i];
+                    
+                    if (aParts.isFalling[pI]) {
+                        aParts.cParts[pI].impulse[i].y -= GRAV_FACTOR;
+                        aParts.cParts[pI].speed[i] += aParts.cParts[pI].impulse[i];
+                        MA[3][0] += aParts.cParts[pI].speed[i].x;
+                        MA[3][1] += aParts.cParts[pI].speed[i].y;
+                        MA[3][2] += aParts.cParts[pI].speed[i].z;
+                    }
+
+                    if (MA[3][1] < 0) {
+                        MA[3][1] = 0;
+                        aParts.cParts[pI].impulse[i] *= -.7;
+                    }
+
+                    partProg->setMVP(&M[0][0], &V[0][0], &P[0][0]);
+                    partProg->setMatrix("MA", &MA[0][0]);
+                    glUniform1f(partProg->getUniform("Dancer"), 0);
+                    glPointSize(3.0f);
+                    glDrawArrays(GL_POINTS, 0, 3);
+                }
+            }
             
             partProg->unbind();
         }
@@ -581,30 +614,32 @@ void GenParticles(bone *broot, particles *parts) {
     
     parts->pos.push_back(broot->pos);
     parts->ma.push_back(broot->mat);
-    
-    if (lPos.x > INT_MIN)
-        CreateExtraVerts(lPos, parts->pos.back(), parts, broot);
-    
+    parts->speed.push_back(vec3(0,0,0));
+    parts->impulse.push_back(vec3(0,0,0));
     
     for (auto kid: broot->kids)
         GenParticles(kid, parts);
 }
 
 void CreateExtraVerts(vec3 lPos, vec3 cPos, particles *parts, bone *broot) {
-    if (distance(lPos, cPos) < 6.5) // do not lower this number
+    if (distance(lPos, cPos) < 3.5) // do not lower this number
         return;
     
     vec3 avg = vec3((lPos.x + cPos.x)/2, (lPos.y + cPos.y)/2, (lPos.z + cPos.z)/2);
     parts->pos.push_back(avg);
     parts->ma.push_back(broot->mat);
+    parts->speed.push_back(vec3(0,0,0));
+    parts->impulse.push_back(vec3(0,0,0));
     CreateExtraVerts(cPos, parts->pos.back(), parts, broot);
     CreateExtraVerts(lPos, parts->pos.back(), parts, broot);
 }
 
 void GenPartMats(particles *parts, mat4 mats[]) {
     
-    for (int i = 0; i < parts->ma.size(); i++)
+    for (int i = 0; i < parts->ma.size(); i++) {
         mats[i] = *(parts->ma[i]);
+        
+    }
 }
 
 int main(int argc, char **argv) {

@@ -1,29 +1,22 @@
 #version 330 core
 layout(location = 0) in vec3 vertPos;
-layout(location = 1) in int vertimat;
 uniform mat4 P;
 uniform mat4 V;
 uniform mat4 M;
-uniform mat4 Panim[250];
-uniform float yVelo;
-uniform float opac;
+uniform mat4 MA;
 
 out vec3 vertex_pos;
 out float opaci;
 void main()
 {
-    mat4 Ma = Panim[vertimat];
+    mat4 Ma = MA;
     vec4 pos= Ma*vec4(vertPos,1.0);
     
     //the animation matrix already holds the end position for the segment
     pos.x = Ma[3][0];
     pos.y = Ma[3][1];
     pos.z = Ma[3][2];
-    pos.y -= yVelo;
-    if (pos.y < 0) {
-        pos.y = 0;
-    }
-    opaci = opac;
+
     gl_Position = P * V * M * pos;
     vertex_pos = pos.xyz;
 }
