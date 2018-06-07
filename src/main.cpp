@@ -34,6 +34,8 @@
 using namespace std;
 using namespace glm;
 
+float totaltime_ms=0;
+
 double get_last_elapsed_time() {
 	static double lasttime = glfwGetTime();
 	double actualtime = glfwGetTime();
@@ -367,6 +369,8 @@ public:
         }
         postproc->addAttribute("vertPos");
         postproc->addAttribute("vertTex");
+        postproc->addUniform("timef");
+        postproc->addUniform("resolution");
         
         // Program for particles
         partProg = std::make_shared<Program>();
@@ -388,11 +392,15 @@ public:
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         postproc->bind();
+        glUniform1f(postproc->getUniform("timef"), totaltime_ms);
+        vec2 res = vec2(800.0,600.0);
+        glUniform2fv(postproc->getUniform("resolution"), 1, &res[0]);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, FBOtex);
         glBindVertexArray(VertexArrayIDScreen);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         postproc->unbind();
+    
     }
   
 	void render_to_framebuffer() {
@@ -412,8 +420,7 @@ public:
         
         // Frame Data
         double frametime = get_last_elapsed_time();
-        static double totaltime_ms=0;
-        totaltime_ms += frametime*1000.0;
+        totaltime_ms += frametime;
         static double totaltime_untilframe_ms = 0;
         totaltime_untilframe_ms += frametime*1000.0;
         
