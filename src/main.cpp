@@ -591,7 +591,7 @@ public:
                     partProg->setMVP(&M[0][0], &V[0][0], &P[0][0]);
                     partProg->setMatrix("MA", &MA[0][0]);
                     glUniform1f(partProg->getUniform("Dancer"), 0);
-                    glPointSize(3.0f);
+                    glPointSize(4.0f);
                     glDrawArrays(GL_POINTS, 0, 3);
                 }
             }
