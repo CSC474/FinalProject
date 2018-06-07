@@ -34,6 +34,8 @@
 using namespace std;
 using namespace glm;
 
+float totaltime_ms=0;
+
 double get_last_elapsed_time() {
 	static double lasttime = glfwGetTime();
 	double actualtime = glfwGetTime();
@@ -52,7 +54,7 @@ public:
     Camera *camera = nullptr;
     
     // Our shader program
-    std::shared_ptr<Program> shape, prog, postproc, partProg, backProg;
+    std::shared_ptr<Program> shape, prog, postproc, partProg;
     
     //Center Dancer
     GLuint VertexArrayID;
@@ -367,6 +369,8 @@ public:
         }
         postproc->addAttribute("vertPos");
         postproc->addAttribute("vertTex");
+        postproc->addUniform("timef");
+        postproc->addUniform("resolution");
         
         // Program for particles
         partProg = std::make_shared<Program>();
@@ -374,18 +378,6 @@ public:
         partProg->init();
         partProg->addUniform("Panim");
         partProg->addUniform("Dancer");
-        
-        //program for back effect post processing
-        backProg = std::make_shared<Program>();
-        backProg->setVerbose(true);
-        backProg->setShaderNames(resourceDirectory + "/back_shader_vertex.glsl", resourceDirectory + "/back_shader_fragment.glsl");
-        if (!backProg->init())
-        {
-            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
-            exit(1);
-        }
-        backProg->addAttribute("vertPos");
-        backProg->addAttribute("vertTex");
 	}
     
     glm::mat4 getPerspectiveMatrix() {
@@ -400,11 +392,15 @@ public:
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         postproc->bind();
+        glUniform1f(postproc->getUniform("timef"), totaltime_ms);
+        vec2 res = vec2(800.0,600.0);
+        glUniform2fv(postproc->getUniform("resolution"), 1, &res[0]);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, FBOtex);
         glBindVertexArray(VertexArrayIDScreen);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         postproc->unbind();
+    
     }
   
 	void render_to_framebuffer() {
@@ -424,8 +420,7 @@ public:
         
         // Frame Data
         double frametime = get_last_elapsed_time();
-        static double totaltime_ms=0;
-        totaltime_ms += frametime*1000.0;
+        totaltime_ms += frametime;
         static double totaltime_untilframe_ms = 0;
         totaltime_untilframe_ms += frametime*1000.0;
         
