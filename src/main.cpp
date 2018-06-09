@@ -54,7 +54,7 @@ public:
     Camera *camera = nullptr;
     
     // Our shader program
-    std::shared_ptr<Program> shape, prog, postproc, partProg;
+    std::shared_ptr<Program> shape, prog, postproc, partProg, billProg;
     
     //Center Dancer
     GLuint VertexArrayID;
@@ -71,8 +71,15 @@ public:
     GLuint VertexArrayIDPart;
     GLuint VertexBufferPart, VertexBufferPartMat;
     
+    //Billboard
+    GLuint BillboardVertexArrayID;
+    GLuint BillboardVertexBufferID, BillboardVertexBufferIDimat, BillboardVertexNormDBox, BillboardVertexTexBox, BillboardIndexBufferIDBox;
+    
     //Frame Buffer
     GLuint fb, depth_fb, FBOtex;
+    
+    //texture data
+    GLuint Texture;
     
     //animation matrices:
     mat4 animmat[200];
@@ -200,6 +207,114 @@ public:
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
         glBindVertexArray(0);
         
+        
+        
+        
+        
+        
+        
+        //generate the VAO
+        glGenVertexArrays(1, &BillboardVertexArrayID);
+        glBindVertexArray(BillboardVertexArrayID);
+        
+        //generate vertex buffer to hand off to OGL
+        glGenBuffers(1, &BillboardVertexBufferID);
+        //set the current state to focus on our vertex buffer
+        glBindBuffer(GL_ARRAY_BUFFER, BillboardVertexBufferID);
+        
+        GLfloat cube_vertices[] = {
+            // front
+            -1.0, -1.0,  1.0,//LD
+            1.0, -1.0,  1.0,//RD
+            1.0,  1.0,  1.0,//RU
+            -1.0,  1.0,  1.0,//LU
+        };
+        //make it a bit smaller
+        for (int i = 0; i < 12; i++)
+            cube_vertices[i] *= 0.5;
+        //actually memcopy the data - only do this once
+        glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_DYNAMIC_DRAW);
+        
+        //we need to set up the vertex array
+        glEnableVertexAttribArray(0);
+        //key function to get up how many elements to pull out at a time (3)
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        
+        //color
+        GLfloat cube_norm[] = {
+            // front colors
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            
+        };
+        glGenBuffers(1, &BillboardVertexNormDBox);
+        //set the current state to focus on our vertex buffer
+        glBindBuffer(GL_ARRAY_BUFFER, BillboardVertexNormDBox);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(cube_norm), cube_norm, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        
+        //color
+        glm::vec2 cube_tex[] = {
+            // front colors
+            glm::vec2(0.0, 1.0),
+            glm::vec2(1.0, 1.0),
+            glm::vec2(1.0, 0.0),
+            glm::vec2(0.0, 0.0),
+            
+        };
+        glGenBuffers(1, &BillboardVertexTexBox);
+        //set the current state to focus on our vertex buffer
+        glBindBuffer(GL_ARRAY_BUFFER, BillboardVertexTexBox);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(cube_tex), cube_tex, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        
+        glGenBuffers(1, &BillboardIndexBufferIDBox);
+        //set the current state to focus on our vertex buffer
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BillboardIndexBufferIDBox);
+        GLushort cube_elements[] = {
+            
+            // front
+            0, 1, 2,
+            2, 3, 0,
+        };
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_elements), cube_elements, GL_STATIC_DRAW);
+        
+        
+        glBindVertexArray(0);
+        
+        
+        int width, height, channels;
+        char filepath[1000];
+        
+        //texture 1
+        string str = resourceDirectory + "/glowHead.jpg";
+        strcpy(filepath, str.c_str());
+        unsigned char* data = stbi_load(filepath, &width, &height, &channels, 4);
+        glGenTextures(1, &Texture);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, Texture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        
+        //set texture to the correct samplers in the fragment shader:
+        GLuint Tex2Location = glGetUniformLocation(billProg->pid, "tex");
+        // Then bind the uniform samplers to texture units:
+        glUseProgram(billProg->pid);
+        glUniform1i(Tex2Location, 0);
+        
+        
+        
+        
+        
+        
         for (int ii = 0; ii < 200; ii++){
             //Center Dancer
             animmat[ii] = mat4(1);
@@ -294,7 +409,7 @@ public:
         GLuint Tex1Location = glGetUniformLocation(postproc->pid, "tex");//tex, tex2... sampler in the fragment shader
         glUseProgram(postproc->pid);
         glUniform1i(Tex1Location, 0);
-        int width, height;
+        //int width, height;
         glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
         //RGBA8 2D texture, 24 bit depth texture, 256x256
         glGenTextures(1, &FBOtex);
@@ -378,6 +493,13 @@ public:
         partProg->init();
         partProg->addUniform("Panim");
         partProg->addUniform("Dancer");
+        
+        billProg = std::make_shared<Program>();
+        billProg->setShaderNames(resourceDirectory + "/billboard_shader_vertex.glsl", resourceDirectory + "/billboard_shader_fragment.glsl");
+        billProg->init();
+        //glUniform3fv(prog->getUniform("campos"), 1, &mycam.pos[0]);
+        //glUniform3fv(prog->getUniform("campos"), 1, &mycam.pos[0]);
+
 	}
     
     glm::mat4 getPerspectiveMatrix() {
@@ -538,6 +660,33 @@ public:
         
         glBindVertexArray(0);
         prog->unbind();
+        
+        
+        //Stick Figure Head
+        billProg->bind();
+        glBindVertexArray(BillboardVertexArrayID);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, BillboardIndexBufferIDBox);
+        billProg->setMVP(&M[0][0], &V[0][0], &P[0][0]);
+        mat4 Vi = glm::transpose(V);
+        Vi[0][3] = 0;
+        Vi[1][3] = 0;
+        Vi[2][3] = 0;
+        
+        //glUniform3fv(billProg->getUniform("campos"), 1, &mycam.pos[0]);
+        Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLoc+1.2, 0.6, -4));
+        S = glm::scale(glm::mat4(1.0f), glm::vec3(0.35f, 0.35f, 0.35f));
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, Texture);
+        M = Trans * S * Vi;
+        glUniformMatrix4fv(billProg->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
+        glBindVertexArray(0);
+        
+        
+        billProg->unbind();
+        
+        
+        
         
         if (frame == 10) {
             GenPartMats(&aParts.cParts[0], partAnims);
