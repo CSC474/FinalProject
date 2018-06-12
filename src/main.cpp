@@ -27,9 +27,23 @@
 #include "bone.h"
 #include "particle.h"
 #include "allParts.h"
+#include "Audio.h"
+#include "Accelerate/accelerate.h"
 
 #define NUM_PARTICLES 805
 #define GRAV_FACTOR .15
+#define HEAD_INDEX 15
+
+/**** OpenAL setup ****/
+#define FREQ 22050   // Sample rate
+#define CAP_SIZE 2048 // How much to capture at a time (affects latency)
+
+short buffer[FREQ*2]; // A buffer to hold captured audio
+
+ALubyte texels[100*100*4];
+ALubyte amplitudes2[1024];
+float amplitudes[1024];
+float buf2[2048];
 
 using namespace std;
 using namespace glm;
@@ -79,7 +93,10 @@ public:
     GLuint fb, depth_fb, FBOtex;
     
     //texture data
-    GLuint Texture;
+    GLuint Texture, AudioTexture, AudioTexLoc;
+    
+    // audio
+    Audio audio;
     
     //animation matrices:
     mat4 animmat[200];
@@ -206,13 +223,7 @@ public:
         //key function to get up how many elements to pull out at a time (3)
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
         glBindVertexArray(0);
-        
-        
-        
-        
-        
-        
-        
+
         //generate the VAO
         glGenVertexArrays(1, &BillboardVertexArrayID);
         glBindVertexArray(BillboardVertexArrayID);
@@ -247,8 +258,8 @@ public:
             0.0, 0.0, 1.0,
             0.0, 0.0, 1.0,
             0.0, 0.0, 1.0,
-            
         };
+        
         glGenBuffers(1, &BillboardVertexNormDBox);
         //set the current state to focus on our vertex buffer
         glBindBuffer(GL_ARRAY_BUFFER, BillboardVertexNormDBox);
@@ -310,11 +321,6 @@ public:
         glUseProgram(billProg->pid);
         glUniform1i(Tex2Location, 0);
         
-        
-        
-        
-        
-        
         for (int ii = 0; ii < 200; ii++){
             //Center Dancer
             animmat[ii] = mat4(1);
@@ -323,11 +329,11 @@ public:
         }
         
         //Center Dancer
-        readtobone("../../resources/test.fbx",&all_animation,&root);
+        readtobone("../../resources/Liam_Main_6B_Char00.fbx",&all_animation,&root);
         root->set_animations(&all_animation,animmat,animmatsize);
         
         //Back-Up Dancers
-        readtobone("../../resources/thrustChar00.fbx",&all_animation2,&root2);
+        readtobone("../../resources/Liam_BackUp_6B_Char00.fbx",&all_animation2,&root2);
         root2->set_animations(&all_animation2,animmat2,animmatsize2);
     
         //Center Dancer
@@ -400,7 +406,18 @@ public:
         // Backup Dancer
         aParts.cParts.push_back(parts);
         aParts.isFalling.push_back(false);
+        aParts.mvInvolved.push_back(false);
         // *************** Particle *******************
+        
+        // ************* AudioTex *********************
+        // dynamic audio texture
+        glGenTextures(1, &AudioTexture);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, AudioTexture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         
         
         ///////////////////////////
@@ -553,9 +570,9 @@ public:
         
         //animation frame system
         //Center Dancer
-        int anim_step_width_ms = 8490 / 204;
+        int anim_step_width_ms = root->animation[0]->duration / root->animation[0]->keyframes.size();
         //Back-Up Dancers (Thrust)
-        int anim_step_width_ms_2 = 5711 / 138;
+        int anim_step_width_ms_2 = root2->animation[0]->duration / root2->animation[0]->keyframes.size();
 
         ///////////////////////////////////
         static int frame = 0;
@@ -566,7 +583,7 @@ public:
         }
         
         //Center Dancer
-        root->play_animation(frame,"axisneurontestfile_Avatar00");
+        root->play_animation(frame,"avatar_0_fbx_tmp");
         //Back Up Dancers
         root2->play_animation(frame,"avatar_0_fbx_tmp");
         
@@ -674,19 +691,18 @@ public:
         
         //glUniform3fv(billProg->getUniform("campos"), 1, &mycam.pos[0]);
         Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLoc+1.2, 0.6, -4));
+        mat4 MF = animmat[HEAD_INDEX];
         S = glm::scale(glm::mat4(1.0f), glm::vec3(0.35f, 0.35f, 0.35f));
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, Texture);
         M = Trans * S * Vi;
         glUniformMatrix4fv(billProg->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        glUniformMatrix4fv(billProg->getUniform("MFollow"), 1, GL_FALSE, &MF[0][0]);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
         glBindVertexArray(0);
         
         
         billProg->unbind();
-        
-        
-        
         
         if (frame == 10) {
             GenPartMats(&aParts.cParts[0], partAnims);
@@ -699,6 +715,7 @@ public:
             GenPartMats(&aParts.cParts.back(), partAnims2);
             aParts.cParts.back().ResetFall();
             aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
         }
         else if (frame == 110) {
             particles nParts;
@@ -707,6 +724,7 @@ public:
             GenPartMats(&aParts.cParts.back(), partAnims3);
             aParts.cParts.back().ResetFall();
             aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
         }
         
         if (frame > 10) {
@@ -722,6 +740,7 @@ public:
             mat4 MA;
             
             aParts.UpdateisFalling(frame);
+            aParts.UpdatemvInvolved(frame);
             for (int pI = 0; pI < aParts.cParts.size(); pI++) {
                 for (int i = 0; i < aParts.cParts[pI].pos.size(); i++) {
                     if (pI == 0)
@@ -731,12 +750,20 @@ public:
                     else if (pI == 2)
                         MA = partAnims3[i];
                     
+                    if (amplitudes2[100] > 230 && aParts.mvInvolved[pI])
+                        aParts.cParts[pI].speed[i].y = -3;
+                    
+                    if (amplitudes2[1023] > 230 && pI == 2 && aParts.mvInvolved[pI])
+                        aParts.cParts[pI].speed[i].y = 5;
+                    
+                    
                     if (aParts.isFalling[pI]) {
                         aParts.cParts[pI].impulse[i].y -= GRAV_FACTOR;
                         aParts.cParts[pI].speed[i] += aParts.cParts[pI].impulse[i];
                         MA[3][0] += aParts.cParts[pI].speed[i].x;
                         MA[3][1] += aParts.cParts[pI].speed[i].y;
                         MA[3][2] += aParts.cParts[pI].speed[i].z;
+                        
                     }
 
                     if (MA[3][1] < 0) {
@@ -760,6 +787,46 @@ public:
         glBindTexture(GL_TEXTURE_2D, FBOtex);
         glGenerateMipmap(GL_TEXTURE_2D);
 	}
+    
+    void fft(short buffer[]) {
+        //******* set up fourier transform *******//
+        
+        //clear texel buffer
+        for (int i=0; i<40000; i++) {
+            texels[i] = 0;
+        }
+        
+        //create float array from short array
+        copy(buffer, buffer + 2048, buf2);
+        
+        const int n = 2048;
+        const int log2n = 11; // 2^11 = 2048
+        
+        DSPSplitComplex a;
+        a.realp = new float[n/2];
+        a.imagp = new float[n/2];
+        
+        // prepare the fft algo (you want to reuse the setup across fft calculations)
+        FFTSetup setup = vDSP_create_fftsetup(log2n, kFFTRadix2);
+        
+        // copy the input to the packed complex array that the fft algo uses
+        vDSP_ctoz((DSPComplex *) buf2, 2, &a, 1, n/2);
+        
+        // calculate the fft
+        vDSP_fft_zrip(setup, &a, 1, log2n, FFT_FORWARD);
+        
+        // do something with the complex spectrum
+        int k=0;
+        for (size_t i = 0; i < n/2; i++) {
+            amplitudes[k] = a.imagp[i];
+            k++;
+        }
+        
+        //map each value from 'float' array to size of byte (originally size of short)
+        for (int i=0; i<1024; i++) {
+            amplitudes2[i] = (amplitudes[i] - SHRT_MIN)/(SHRT_MAX - SHRT_MIN) * 255;
+        }
+    }
 };
 
 void GenParticles(bone *broot, particles *parts) {
@@ -798,6 +865,46 @@ void GenPartMats(particles *parts, mat4 mats[]) {
     }
 }
 
+void fft(short buffer[]) {
+    //******* set up fourier transform *******//
+    
+    //clear texel buffer
+    for (int i=0; i<40000; i++) {
+        texels[i] = 0;
+    }
+    
+    //create float array from short array
+    copy(buffer, buffer + 2048, buf2);
+    
+    const int n = 2048;
+    const int log2n = 11; // 2^11 = 2048
+    
+    DSPSplitComplex a;
+    a.realp = new float[n/2];
+    a.imagp = new float[n/2];
+    
+    // prepare the fft algo (you want to reuse the setup across fft calculations)
+    FFTSetup setup = vDSP_create_fftsetup(log2n, kFFTRadix2);
+    
+    // copy the input to the packed complex array that the fft algo uses
+    vDSP_ctoz((DSPComplex *) buf2, 2, &a, 1, n/2);
+    
+    // calculate the fft
+    vDSP_fft_zrip(setup, &a, 1, log2n, FFT_FORWARD);
+    
+    // do something with the complex spectrum
+    int k=0;
+    for (size_t i = 0; i < n/2; i++) {
+        amplitudes[k] = a.imagp[i];
+        k++;
+    }
+    
+    //map each value from 'float' array to size of byte (originally size of short)
+    for (int i=0; i<1024; i++) {
+        amplitudes2[i] = (amplitudes[i] - SHRT_MIN)/(SHRT_MAX - SHRT_MIN) * 255;
+    }
+}
+
 int main(int argc, char **argv) {
 	std::string resourceDir = "../../resources";
 	if (argc >= 2) {
@@ -805,6 +912,10 @@ int main(int argc, char **argv) {
 	}
 
 	Application *application = new Application();
+    
+    // Inititalize audio
+    Audio *audio = new Audio();
+    audio->initAL();
 
     // Initialize window.
 	WindowManager * windowManager = new WindowManager();
@@ -820,6 +931,9 @@ int main(int argc, char **argv) {
 	while (!glfwWindowShouldClose(windowManager->getHandle())) {
         // Update camera position.
         application->camera->update();
+        //Audio stuff
+        audio->readAudio();
+        application->fft(audio->buffer);
 		// Render scene.
         application->render_to_framebuffer();
 		application->render();
@@ -831,6 +945,7 @@ int main(int argc, char **argv) {
 	}
 
 	// Quit program.
+    audio->cleanAL();
 	windowManager->shutdown();
 	return 0;
 }

@@ -11,8 +11,8 @@ void main()
 {
     mat4 Ma = MA;
     vec4 pos= Ma*vec4(vertPos,1.0);
-    
-    //the animation matrix already holds the end position for the segment
+
+//the animation matrix already holds the end position for the segment
     pos.x = Ma[3][0];
     pos.y = Ma[3][1];
     pos.z = Ma[3][2];
