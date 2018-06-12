@@ -575,7 +575,7 @@ public:
         int anim_step_width_ms_2 = root2->animation[0]->duration / root2->animation[0]->keyframes.size();
 
         ///////////////////////////////////
-        static int frame = 0;
+        static int frame = 600;
         if (totaltime_untilframe_ms >= anim_step_width_ms)
         {
             totaltime_untilframe_ms = 0;
@@ -701,7 +701,7 @@ public:
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
         glBindVertexArray(0);
         
-        
+        cout << "frame: " << frame << endl;
         billProg->unbind();
         
         if (frame == 10) {
