@@ -6,6 +6,24 @@ project(fp)
 # Use glob to get the list of all source files.
 file(GLOB_RECURSE SOURCES "src/*.cpp" "ext/glad/src/*.c")
 
+
+# ALUT set up
+set(ALUT_DIR /usr/local/Cellar/freealut/1.1.0)
+if (ALUT_DIR)
+  message(STATUS "ALUT environment variable found")
+  # Get the ALUT environment variable.
+  include_directories(${ALUT_DIR}/include)
+  target_link_libraries(${CMAKE_PROJECT_NAME} ${ALUT_LIBRARIES})
+endif()
+if(NOT ALUT_DIR)
+  message(FATAL_ERROR "Please point the environment variable ALUT_DIR to the root directory of your ALUT installation.")
+endif()
+
+if(WIN32)
+  # With prebuilt binaries
+  link_directories(${ALUT_DIR}/lib/Release/Win32)
+endif()
+
 # We don't really need to include header and resource files to build, but it's
 # nice to have them show up in IDEs.
 file(GLOB_RECURSE HEADERS "src/*.h" "ext/glad/*/*.h")
@@ -112,7 +130,7 @@ else()
 
   if(APPLE)
     # Add required frameworks for GLFW.
-    target_link_libraries(${CMAKE_PROJECT_NAME} "-framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo")
+    target_link_libraries(${CMAKE_PROJECT_NAME} "-framework OpenGL -framework OpenAL -framework Cocoa -framework IOKit -framework Accelerate -framework CoreVideo")
   else()
     #Link the Linux OpenGL library
     target_link_libraries(${CMAKE_PROJECT_NAME} "GL" "dl")
