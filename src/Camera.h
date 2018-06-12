@@ -27,7 +27,7 @@ public:
 private:
     void setRotation(glm::mat4 rot); // Doesn't update rot
     
-    glm::vec3 lookVector = glm::vec3(0, 0, -1);
+    glm::vec3 lookVector = glm::vec3(5, 0, -1);
     glm::vec3 up = glm::vec3(0, 1, 0);
 };
 

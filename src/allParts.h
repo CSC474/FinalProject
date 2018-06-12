@@ -23,22 +23,15 @@ struct allParts {
     
     void UpdateisFalling(int frame) {
         for (int i = 0; i < isFalling.size(); i++) {
-            if (i == 0 && frame > 30)
+            if (frame > (i+6)*100 + 30) 
                 isFalling[i] = true;
-            else if (i == 1 && frame > 90)
-                isFalling[i] = true;
-            else if (i == 2 && frame > 130)
-                isFalling[i] = true;
+            
         }
     }
     
     void UpdatemvInvolved(int frame) {
         for (int i = 0; i < mvInvolved.size(); i++) {
-            if (i == 0 && frame > 50)
-                mvInvolved[i] = true;
-            else if (i == 1 && frame > 100)
-                mvInvolved[i] = true;
-            else if (i == 2 && frame > 150)
+            if (frame > (i+6)*100 + 100)
                 mvInvolved[i] = true;
         }
     }

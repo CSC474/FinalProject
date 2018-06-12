@@ -117,6 +117,33 @@ public:
     mat4 partAnims[NUM_PARTICLES];
     mat4 partAnims2[NUM_PARTICLES];
     mat4 partAnims3[NUM_PARTICLES];
+    mat4 partAnims4[NUM_PARTICLES];
+    mat4 partAnims5[NUM_PARTICLES];
+    mat4 partAnims6[NUM_PARTICLES];
+    mat4 partAnims7[NUM_PARTICLES];
+    mat4 partAnims8[NUM_PARTICLES];
+    mat4 partAnims9[NUM_PARTICLES];
+    mat4 partAnims10[NUM_PARTICLES];
+    mat4 partAnims11[NUM_PARTICLES];
+    mat4 partAnims12[NUM_PARTICLES];
+    mat4 partAnims13[NUM_PARTICLES];
+    mat4 partAnims14[NUM_PARTICLES];
+    mat4 partAnims15[NUM_PARTICLES];
+    mat4 partAnims16[NUM_PARTICLES];
+    mat4 partAnims17[NUM_PARTICLES];
+    mat4 partAnims18[NUM_PARTICLES];
+    mat4 partAnims19[NUM_PARTICLES];
+    mat4 partAnims20[NUM_PARTICLES];
+    mat4 partAnims21[NUM_PARTICLES];
+    mat4 partAnims22[NUM_PARTICLES];
+    mat4 partAnims23[NUM_PARTICLES];
+    mat4 partAnims24[NUM_PARTICLES];
+    mat4 partAnims25[NUM_PARTICLES];
+    mat4 partAnims26[NUM_PARTICLES];
+    mat4 partAnims27[NUM_PARTICLES];
+    mat4 partAnims28[NUM_PARTICLES];
+    mat4 partAnims29[NUM_PARTICLES];
+    mat4 partAnims30[NUM_PARTICLES];
 
     int size_stick = 0;
     int size_stick_2 = 0;
@@ -575,7 +602,7 @@ public:
         int anim_step_width_ms_2 = root2->animation[0]->duration / root2->animation[0]->keyframes.size();
 
         ///////////////////////////////////
-        static int frame = 0;
+        static int frame = 600;
         if (totaltime_untilframe_ms >= anim_step_width_ms)
         {
             totaltime_untilframe_ms = 0;
@@ -704,11 +731,11 @@ public:
         
         billProg->unbind();
         
-        if (frame == 10) {
+        if (frame == 600) {
             GenPartMats(&aParts.cParts[0], partAnims);
             aParts.cParts.back().ResetFall();
         }
-        else if (frame == 70) {
+        else if (frame == 700) {
             particles nParts;
             GenParticles(root, &nParts);
             aParts.cParts.push_back(nParts);
@@ -717,7 +744,7 @@ public:
             aParts.isFalling.push_back(false);
             aParts.mvInvolved.push_back(false);
         }
-        else if (frame == 110) {
+        else if (frame == 800) {
             particles nParts;
             GenParticles(root, &nParts);
             aParts.cParts.push_back(nParts);
@@ -726,8 +753,251 @@ public:
             aParts.isFalling.push_back(false);
             aParts.mvInvolved.push_back(false);
         }
+        else if (frame == 900) {
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims4);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 1000){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims5);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 1100){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims6);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 1200){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims7);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 1300){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims8);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 1400){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims9);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 1500){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims10);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 1600){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims11);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 1700){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims12);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 1800){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims13);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 1900){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims14);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 2000){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims15);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 2100){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims16);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 2200){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims17);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 2300){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims18);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 2400){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims19);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 2500){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims20);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 2600){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims21);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 2700){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims22);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 2800){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims23);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 2900){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims24);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 3000){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims25);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 3100){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims26);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 3200){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims27);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 3300){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims28);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 3400){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims29);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
+        else if (frame == 3500){
+            particles nParts;
+            GenParticles(root, &nParts);
+            aParts.cParts.push_back(nParts);
+            GenPartMats(&aParts.cParts.back(), partAnims30);
+            aParts.cParts.back().ResetFall();
+            aParts.isFalling.push_back(false);
+            aParts.mvInvolved.push_back(false);
+        }
         
-        if (frame > 10) {
+        if (frame > 600) {
             // *********** Particles *****************
             partProg->bind();
             // Center Dancer particle
@@ -749,13 +1019,66 @@ public:
                         MA = partAnims2[i];
                     else if (pI == 2)
                         MA = partAnims3[i];
+                    else if (pI == 3)
+                        MA = partAnims4[i];
+                    else if (pI == 4)
+                        MA = partAnims5[i];
+                    else if (pI == 5)
+                        MA = partAnims6[i];
+                    else if (pI == 6)
+                        MA = partAnims7[i];
+                    else if (pI == 7)
+                        MA = partAnims8[i];
+                    else if (pI == 8)
+                        MA = partAnims9[i];
+                    else if (pI == 9)
+                        MA = partAnims10[i];
+                    else if (pI == 10)
+                        MA = partAnims11[i];
+                    else if (pI == 11)
+                        MA = partAnims12[i];
+                    else if (pI == 12)
+                        MA = partAnims13[i];
+                    else if (pI == 13)
+                        MA = partAnims14[i];
+                    else if (pI == 14)
+                        MA = partAnims15[i];
+                    else if (pI == 15)
+                        MA = partAnims16[i];
+                    else if (pI == 16)
+                        MA = partAnims17[i];
+                    else if (pI == 17)
+                        MA = partAnims18[i];
+                    else if (pI == 18)
+                        MA = partAnims19[i];
+                    else if (pI == 19)
+                        MA = partAnims20[i];
+                    else if (pI == 20)
+                        MA = partAnims21[i];
+                    else if (pI == 21)
+                        MA = partAnims22[i];
+                    else if (pI == 22)
+                        MA = partAnims23[i];
+                    else if (pI == 23)
+                        MA = partAnims24[i];
+                    else if (pI == 24)
+                        MA = partAnims25[i];
+                    else if (pI == 25)
+                        MA = partAnims26[i];
+                    else if (pI == 26)
+                        MA = partAnims27[i];
+                    else if (pI == 27)
+                        MA = partAnims28[i];
+                    else if (pI == 28)
+                        MA = partAnims29[i];
+                    else if (pI == 29)
+                        MA = partAnims30[i];
                     
                     if (amplitudes2[100] > 230 && aParts.mvInvolved[pI])
                         aParts.cParts[pI].speed[i].y = -3;
                     
                     if (amplitudes2[1023] > 230 && pI == 2 && aParts.mvInvolved[pI])
                         aParts.cParts[pI].speed[i].y = 5;
-                    
                     
                     if (aParts.isFalling[pI]) {
                         aParts.cParts[pI].impulse[i].y -= GRAV_FACTOR;
