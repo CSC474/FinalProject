@@ -667,39 +667,39 @@ public:
         glDrawArrays(GL_LINES, 4, size_stick_2-4);
         
         //Right Dancer
-        float xLocRight = 0.5;
-        Trans = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, -1.3f, -6));
+        float xLocRight = 2.0;
+        Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLocRight, -1.3f, -6));
         M = Trans * S;
         prog->setMVP(&M[0][0], &V[0][0], &P[0][0]);
         glDrawArrays(GL_LINES, 4, size_stick_2-4);
         
         //Left Dancer : Decreasing Transparency for Glow effect
         static float j;
-        for(j = 0.002; j < 0.012; j+=0.002){
+        for(j = 0.002; j < 0.006; j+=0.002){
             //Left
             Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLocLeft+j, -1.3f, -6));
             M = Trans * S;
             prog->setMVP(&M[0][0], &V[0][0], &P[0][0]);
             glUniform1f(prog->getUniform("Dancer"), j+1);
-            glDrawArrays(GL_LINES, 4, size_stick-4);
+            glDrawArrays(GL_LINES, 4, size_stick_2-4);
             //Left
             Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLocLeft-j, -1.3f, -6));
             M = Trans * S;
             prog->setMVP(&M[0][0], &V[0][0], &P[0][0]);
             glUniform1f(prog->getUniform("Dancer"), j+1);
-            glDrawArrays(GL_LINES, 4, size_stick-4);
+            glDrawArrays(GL_LINES, 4, size_stick_2-4);
             //Right
             Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLocRight+j, -1.3f, -6));
             M = Trans * S;
             prog->setMVP(&M[0][0], &V[0][0], &P[0][0]);
             glUniform1f(prog->getUniform("Dancer"), j+1);
-            glDrawArrays(GL_LINES, 4, size_stick-4);
+            glDrawArrays(GL_LINES, 4, size_stick_2-4);
             //Right
             Trans = glm::translate(glm::mat4(1.0f), glm::vec3(xLocRight-j, -1.3f, -6));
             M = Trans * S;
             prog->setMVP(&M[0][0], &V[0][0], &P[0][0]);
             glUniform1f(prog->getUniform("Dancer"), j+1);
-            glDrawArrays(GL_LINES, 4, size_stick-4);
+            glDrawArrays(GL_LINES, 4, size_stick_2-4);
         }
         
         glBindVertexArray(0);
@@ -728,7 +728,7 @@ public:
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
         glBindVertexArray(0);
         
-        
+        cout << "frame: " << frame << endl;
         billProg->unbind();
         
         if (frame == 600) {
